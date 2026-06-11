@@ -1,0 +1,72 @@
+# Global or common metadata
+replicaCount: 2
+
+# Container image configurations
+image:
+  repository: ajaysingh85/image  # Replaced dynamically or defined here
+  tag: "15"                              # Jenkins can override this with --set image.tag=$BUILD_NUMBER
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 8080
+  nodePort: 32000
+
+ingress:
+  enabled: true
+  ingressClassName: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: life-insurance.local
+      paths:
+        - path: /
+          pathType: Prefix
+  
+
+database:
+  name: life_insurance
+  secretName: lifeinsurance-db-secret
+  keys:
+    host: host
+    username: username
+    password: password
+
+resources:
+  requests:
+    cpu: "250m"
+    memory: "512Mi"
+  limits:
+    cpu: "500m"
+    memory: "768Mi"
+
+securityContext:
+  runAsNonRoot: true
+  ranAsUser: 1000
+
+probes:
+  readiness:
+    path: /
+    port: 8080 
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  liveness:
+    path: /
+    port: 8080 
+    initialDelaySeconds: 60
+    periodSeconds: 20
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70  
+    
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+httpRoute:
+  enabled: false
+  parentRefs: []

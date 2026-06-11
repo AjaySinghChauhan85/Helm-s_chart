@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "life_insurance.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "life_insurance.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.hpa.enabled}}
+  replicas: {{.Values.replicaCount}}
+  {{- end}}
+  selector:
+    matchLabels:
+      {{- include "life_insurance.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        {{- include "life_insurance.selectorLabels" . | nindent 8 }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+        - name: {{.Chart.Name | replace "_" "-"}}
+          image: "{{.Values.image.repository}}:{{.Values.image.tag | default .Chart.AppVersion}}"
+          imagePullPolicy: {{.Values.image.pullPolicy}}    # replaced by Jenkinsfile
+          securityContext:
+            runAsNonRoot: {{.Values.securityContext.runAsNonRoot}}
+            runAsUser: {{.Values.securityContext.ranAsUser}}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.database.secretName}}
+                  key: {{.Values.database.keys.host}}
+            - name: DB_NAME
+              value: {{.Values.database.name | quote}}
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.database.secretName}}
+                  key: {{.Values.database.keys.username}}
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.database.secretName}}
+                  key: {{.Values.database.keys.password}}
+          resources: 
+            {{- toYaml .Values.resources | nindent 12}}
+          readinessProbe:
+            httpGet:
+              path: {{.Values.probes.readiness.path}}
+              port: {{.Values.probes.readiness.port}}
+            initialDelaySeconds: {{.Values.probes.readiness.initialDelaySeconds}}
+            periodSeconds: {{.Values.probes.readiness.periodSeconds}}
+          livenessProbe:
+            httpGet:
+              path: {{.Values.probes.liveness.path}}
+              port: {{.Values.probes.liveness.port}}
+            initialDelaySeconds: {{.Values.probes.liveness.initialDelaySeconds}}
+            periodSeconds: {{.Values.probes.liveness.periodSeconds}}
+
