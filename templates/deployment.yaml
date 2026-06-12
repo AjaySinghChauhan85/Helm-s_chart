@@ -34,7 +34,7 @@ spec:
             runAsNonRoot: {{.Values.securityContext.runAsNonRoot}}
             runAsUser: {{.Values.securityContext.ranAsUser}}
           ports:
-            - containerPort: 8080
+            - containerPort: 80
           env:
             - name: DB_HOST
               valueFrom:
