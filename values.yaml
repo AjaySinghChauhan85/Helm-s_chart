@@ -43,7 +43,7 @@ resources:
 
 securityContext:
   runAsNonRoot: true
-  ranAsUser: 1000
+  runAsUser: 1000
 
 probes:
   readiness:
