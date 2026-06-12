@@ -48,12 +48,12 @@ securityContext:
 probes:
   readiness:
     path: /
-    port: 8080 
+    port: 80
     initialDelaySeconds: 30
     periodSeconds: 10
   liveness:
     path: /
-    port: 8080 
+    port: 80 
     initialDelaySeconds: 60
     periodSeconds: 20
 hpa:
